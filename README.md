@@ -1,210 +1,184 @@
-# AI Resume Screening API
+# 🚀 AI Resume Screening API
 
-An AI-powered Resume Screening API built with **FastAPI**, **SQLAlchemy**, **JWT Authentication**, and **Groq LLM**. The system allows recruiters to create job postings, upload resumes, automatically calculate ATS scores, identify skill gaps, generate AI-powered feedback, and maintain analysis history.
+An AI-powered Resume Screening API built using **FastAPI**, **SQLAlchemy**, **JWT Authentication**, and **Groq LLM**. The API allows recruiters to create job descriptions, upload resumes, calculate ATS scores, identify missing skills, and generate AI-powered hiring feedback.
 
 ---
 
-## Features
+## 🌐 Live Demo
 
-### Authentication
-- Recruiter Registration
-- Secure Login using JWT Authentication
-- Password hashing with bcrypt
-- Protected API endpoints
+**API Base URL**
 
-### Job Management
-- Create Job Posts
+https://resume-screening-api-z2fi.onrender.com
+
+**Swagger Documentation**
+
+https://resume-screening-api-z2fi.onrender.com/docs
+
+---
+
+# ✨ Features
+
+### 👤 Recruiter Authentication
+- JWT Authentication
+- Secure Password Hashing (bcrypt)
+- Register/Login APIs
+- Protected Routes
+
+### 💼 Job Management
+- Create Job
 - View All Jobs
-- View Individual Job
-- Delete Jobs
+- View Single Job
+- Delete Job
 
-### Resume Parsing
-- Upload PDF resumes
-- Extract:
-  - Candidate Name
-  - Email
-  - Phone Number
-  - Skills
-  - Resume Text
+### 📄 Resume Parsing
+- Upload Resume (PDF)
+- Extract Candidate Name
+- Extract Email
+- Extract Phone Number
+- Extract Technical Skills
 
-### 📊 ATS Score Calculation
-- Skill matching between Resume and Job Description
-- ATS Score generation
+### 📊 ATS Score Analysis
+- Skill Matching
+- ATS Score Calculation
 - Match Percentage
 - Missing Skills Detection
 
-### AI Feedback
-Using **Groq LLM**, the API generates:
+### 🤖 AI Feedback
+Powered by **Groq Llama 3**
+
+Generates
 
 - Resume Summary
-- Candidate Strengths
+- Strengths
 - Weaknesses
 - Hiring Recommendation
 
-### Analysis History
-Every resume analysis is stored in the database along with:
-- Candidate Name
+### 📚 Analysis History
+
+Stores every resume analysis including
+
 - ATS Score
 - Match Percentage
-- Matched Skills
+- Skills Matched
 - Missing Skills
 - AI Feedback
-- Recruiter
-- Job
 
 ---
 
 # 🛠 Tech Stack
 
 ## Backend
+
 - FastAPI
-- SQLAlchemy 2.0
+- Python
+- SQLAlchemy ORM
 - SQLite
 
 ## Authentication
+
 - JWT
-- OAuth2 Password Flow
-- Passlib
-- bcrypt
+- OAuth2 Password Bearer
+- Passlib (bcrypt)
 
 ## AI
-- Groq API (Llama Model)
+
+- Groq API
+- Llama 3
 
 ## Resume Parsing
-- PyMuPDF
 
-## Validation
-- Pydantic v2
+- PyMuPDF
+- Regex
+
+## Deployment
+
+- Render
 
 ---
 
 # 📂 Project Structure
 
-```text
-resume-screening-api/
+```
+app/
 │
-├── app/
-│   ├── api/
-│   │   ├── auth.py
-│   │   ├── jobs.py
-│   │   ├── resume.py
-│   │   └── analysis.py
-│   │
-│   ├── core/
-│   │   ├── config.py
-│   │   └── security.py
-│   │
-│   ├── db/
-│   │   └── database.py
-│   │
-│   ├── models/
-│   │   ├── user.py
-│   │   ├── job.py
-│   │   └── analysis.py
-│   │
-│   ├── schemas/
-│   │   ├── user.py
-│   │   ├── job.py
-│   │   ├── resume.py
-│   │   └── analysis.py
-│   │
-│   ├── services/
-│   │   ├── ai.py
-│   │   ├── ats.py
-│   │   └── parser.py
-│   │
-│   ├── utils/
-│   │   └── skills.py
-│   │
-│   └── main.py
+├── api/
+│   ├── auth.py
+│   ├── jobs.py
+│   ├── resume.py
+│   └── analysis.py
 │
-├── uploads/
-├── tests/
-├── requirements.txt
-├── README.md
-└── .env
+├── core/
+│   ├── config.py
+│   └── security.py
+│
+├── db/
+│   └── database.py
+│
+├── models/
+│
+├── schemas/
+│
+├── services/
+│   ├── parser.py
+│   ├── ats.py
+│   └── ai.py
+│
+└── main.py
 ```
 
 ---
 
-# ⚙ Installation
+# 🔐 Authentication Flow
 
-## Clone Repository
-
-```bash
-git clone https://github.com/yourusername/resume-screening-api.git
-
-cd resume-screening-api
+```
+Register
+      │
+      ▼
+Login
+      │
+      ▼
+JWT Token
+      │
+      ▼
+Protected APIs
 ```
 
 ---
 
-## Create Virtual Environment
+# 📊 Resume Analysis Workflow
 
-```bash
-python -m venv venv
 ```
-
-Windows
-
-```bash
-venv\Scripts\activate
-```
-
-Linux / macOS
-
-```bash
-source venv/bin/activate
-```
-
----
-
-## Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Configure Environment Variables
-
-Create a `.env` file:
-
-```env
-SECRET_KEY=your_secret_key
-
-ALGORITHM=HS256
-
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-
-GROQ_API_KEY=your_groq_api_key
+Recruiter Login
+        │
+        ▼
+Create Job
+        │
+        ▼
+Upload Resume
+        │
+        ▼
+Extract Resume Information
+        │
+        ▼
+Calculate ATS Score
+        │
+        ▼
+Generate AI Feedback
+        │
+        ▼
+Store Analysis History
 ```
 
 ---
 
-## Run Server
-
-```bash
-uvicorn app.main:app --reload
-```
-
-Swagger UI
-
-```
-http://127.0.0.1:8000/docs
-```
-
----
-
-# 📚 API Endpoints
+# 📌 API Endpoints
 
 ## Authentication
 
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| POST | `/auth/register` | Register Recruiter |
-| POST | `/auth/login` | Login |
+| Method | Endpoint |
+|---------|----------|
+| POST | /auth/register |
+| POST | /auth/login |
 
 ---
 
@@ -212,10 +186,10 @@ http://127.0.0.1:8000/docs
 
 | Method | Endpoint |
 |---------|----------|
-| POST | `/jobs/` |
-| GET | `/jobs/` |
-| GET | `/jobs/{id}` |
-| DELETE | `/jobs/{id}` |
+| POST | /jobs |
+| GET | /jobs |
+| GET | /jobs/{id} |
+| DELETE | /jobs/{id} |
 
 ---
 
@@ -223,7 +197,7 @@ http://127.0.0.1:8000/docs
 
 | Method | Endpoint |
 |---------|----------|
-| POST | `/resume/upload` |
+| POST | /resume/upload |
 
 ---
 
@@ -231,41 +205,80 @@ http://127.0.0.1:8000/docs
 
 | Method | Endpoint |
 |---------|----------|
-| POST | `/analysis/{job_id}` |
-| GET | `/analysis/history` |
+| POST | /analysis/{job_id} |
+| GET | /analysis/history |
 
 ---
 
-# 🧠 AI Workflow
+# ⚙️ Installation
 
-```text
-Resume PDF
-      │
-      ▼
-Extract Resume Text
-      │
-      ▼
-Extract Skills
-      │
-      ▼
-Compare with Job Skills
-      │
-      ▼
-Calculate ATS Score
-      │
-      ▼
-Generate AI Feedback (Groq)
-      │
-      ▼
-Store Analysis in Database
-      │
-      ▼
-Return API Response
+Clone Repository
+
+```bash
+git clone https://github.com/Kaniishk005/resume-screening-api.git
+
+cd resume-screening-api
+```
+
+Create Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+Activate Environment
+
+Windows
+
+```bash
+venv\Scripts\activate
+```
+
+Linux/Mac
+
+```bash
+source venv/bin/activate
+```
+
+Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Run Server
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Open
+
+```
+http://127.0.0.1:8000/docs
 ```
 
 ---
 
-# 📸 Sample Response
+# 🔑 Environment Variables
+
+Create a `.env`
+
+```env
+DATABASE_URL=sqlite:///resume.db
+
+SECRET_KEY=your_secret_key
+
+ALGORITHM=HS256
+
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+GROQ_API_KEY=your_groq_api_key
+```
+
+---
+
+# 📈 Sample Response
 
 ```json
 {
@@ -292,37 +305,39 @@ Return API Response
 
 ---
 
-# 🔒 Security Features
-
-- JWT Authentication
-- Password Hashing using bcrypt
-- Protected Routes
-- OAuth2 Password Flow
-- Environment Variable Configuration
-
----
-
 # 🚀 Future Improvements
 
-- Docker Deployment
-- PostgreSQL Support
-- Role-Based Access Control (Recruiter/Admin)
-- Resume Ranking
-- Batch Resume Analysis
+- PostgreSQL Integration
+- Docker Support
+- GitHub Actions CI/CD
+- Recruiter Dashboard (React)
+- Resume Ranking System
+- Multiple Resume Comparison
+- AI Interview Question Generator
+- AI Resume Improvement Suggestions
 - Email Notifications
-- Interview Recommendation Engine
-- Analytics Dashboard
-- CI/CD Pipeline
-- Unit & Integration Tests
 
 ---
 
+# 📷 Screenshots
+
+## Swagger Documentation
+
+![alt text](image.png)
+
+---
 # 👨‍💻 Author
 
 **Kanishk Tiwari**
 
-- GitHub: https://github.com/Kaniishk005
+GitHub
+
+https://github.com/Kaniishk005
+
+LinkedIn
+
+(Add your LinkedIn URL)
 
 ---
 
-## ⭐ If you found this project useful, consider giving it a star!
+# ⭐ If you found this project useful, consider giving it a star.
