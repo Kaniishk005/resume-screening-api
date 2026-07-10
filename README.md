@@ -305,20 +305,6 @@ GROQ_API_KEY=your_groq_api_key
 
 ---
 
-# 🚀 Future Improvements
-
-- PostgreSQL Integration
-- Docker Support
-- GitHub Actions CI/CD
-- Recruiter Dashboard (React)
-- Resume Ranking System
-- Multiple Resume Comparison
-- AI Interview Question Generator
-- AI Resume Improvement Suggestions
-- Email Notifications
-
----
-
 # 📷 Screenshots
 
 ## Swagger Documentation
@@ -333,10 +319,6 @@ GROQ_API_KEY=your_groq_api_key
 GitHub
 
 https://github.com/Kaniishk005
-
-LinkedIn
-
-(Add your LinkedIn URL)
 
 ---
 
