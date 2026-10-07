@@ -185,3 +185,21 @@ def parse_job_description(description: str, title: str | None = None) -> JobProf
 parse_job = parse_job_description
 build_job_profile = parse_job_description
 
+
+def parse_stored_job(
+    *,
+    title: str,
+    description: str,
+    required_skills: str,
+    experience: str,
+) -> JobProfile:
+    """Build a Phase 2 profile from the existing normalized job record."""
+
+    composed = (
+        f"{title.strip()}\n"
+        f"Required Skills:\n{required_skills.strip()}\n"
+        f"Experience:\n{experience.strip()}\n"
+        f"Responsibilities:\n{description.strip()}"
+    )
+    return parse_job_description(composed, title=title)
+

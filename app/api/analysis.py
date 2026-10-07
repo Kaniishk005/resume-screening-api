@@ -12,8 +12,7 @@ from app.models.analysis import Analysis
 from app.models.job import Job
 from app.models.user import User
 from app.services.ai import AIServiceError, generate_feedback
-from app.services.ats import calculate_ats_score, calculate_skill_match
-from app.services.parser import ResumeParsingError, parse_resume
+from app.services.parser import ResumeParsingError, extract_text_from_pdf
 from app.services.uploads import UploadValidationError, temporary_pdf
 from app.schemas.analysis import (
     AnalysisResponse,
@@ -21,10 +20,13 @@ from app.schemas.analysis import (
 )
 from app.services.zip_processor import extract_zip
 from app.enums.candidate_status import CandidateStatus
-from app.core.constants import SHORTLIST_THRESHOLD
 from app.schemas.status import StatusUpdate
 from app.services.status_service import is_valid_transition
 from app.schemas.status_response import StatusResponse
+from app.schemas.matching import MatchResult
+from app.services.job_parser import parse_stored_job
+from app.services.matching import evaluate_match
+from app.services.resume_intelligence import build_resume_profile
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
@@ -34,38 +36,36 @@ def process_resume_file(
     db: Session,
     current_user: User
 ):
-    parsed = parse_resume(file_path)
-
-    result = calculate_skill_match(
-        job.required_skills,
-        parsed["skills"]
+    resume_text = extract_text_from_pdf(file_path)
+    resume_profile = build_resume_profile(resume_text)
+    job_profile = parse_stored_job(
+        title=job.title,
+        description=job.description,
+        required_skills=job.required_skills,
+        experience=job.experience,
     )
-
-    ats_score = calculate_ats_score(
-        result["match_percentage"]
-    )
-
-    status = (
-        CandidateStatus.SHORTLISTED
-        if ats_score >= SHORTLIST_THRESHOLD
-        else CandidateStatus.REJECTED
-    )
+    match_result = evaluate_match(resume_profile, job_profile)
+    ats_score = int(round(match_result.overall_score))
+    required_component = match_result.components["required_skills"]
+    match_percentage = required_component.score or 0.0
+    status = CandidateStatus.NEW
 
     feedback = generate_feedback(
-        parsed["extracted_text"],
-        result["matched_skills"],
-        result["missing_skills"],
+        resume_text,
+        match_result.matched_required_skills,
+        match_result.missing_required_skills,
         ats_score
     )
 
     analysis = Analysis(
-        candidate_name=parsed["candidate_name"],
+        candidate_name=resume_profile.candidate_name,
         ats_score=ats_score,
         status = status,
-        match_percentage=result["match_percentage"],
-        matched_skills=json.dumps(result["matched_skills"]),
-        missing_skills=json.dumps(result["missing_skills"]),
+        match_percentage=match_percentage,
+        matched_skills=json.dumps(match_result.matched_required_skills),
+        missing_skills=json.dumps(match_result.missing_required_skills),
         ai_feedback=json.dumps(feedback),
+        match_breakdown=match_result.model_dump_json(),
         job_id=job.id,
         recruiter_id=current_user.id
     )
@@ -79,13 +79,14 @@ def process_resume_file(
         raise HTTPException(status_code=500, detail="Unable to save analysis.") from exc
 
     return {
-        "candidate_name": parsed["candidate_name"],
+        "candidate_name": resume_profile.candidate_name,
         "ats_score": ats_score,
         "status": status,
-        "match_percentage": result["match_percentage"],
-        "matched_skills": result["matched_skills"],
-        "missing_skills": result["missing_skills"],
-        "ai_feedback": feedback
+        "match_percentage": match_percentage,
+        "matched_skills": match_result.matched_required_skills,
+        "missing_skills": match_result.missing_required_skills,
+        "ai_feedback": feedback,
+        "match_breakdown": match_result,
     }
 
 
@@ -156,6 +157,11 @@ def get_analysis_history(
                 "matched_skills": json.loads(analysis.matched_skills),
                 "missing_skills": json.loads(analysis.missing_skills),
                 "ai_feedback": json.loads(analysis.ai_feedback),
+                "match_breakdown": (
+                    MatchResult.model_validate_json(analysis.match_breakdown)
+                    if analysis.match_breakdown
+                    else None
+                ),
             }
         )
 

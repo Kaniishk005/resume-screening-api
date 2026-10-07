@@ -233,6 +233,61 @@ embeddings, or a database migration. These endpoints expose document facts for
 future explainable matching; they do not make hiring decisions or replace the
 existing ATS analysis.
 
+## Phase 3: explainable resume/job alignment
+
+Phase 3 replaces the legacy score bucket used by new analyses with a pure,
+deterministic matching service. The score describes only what the supplied
+resume demonstrates relative to the supplied job description. It is not a
+hiring recommendation, a qualification decision, or proof that a candidate
+does or does not possess information omitted from the resume.
+
+The five default component weights are explicit product assumptions rather
+than scientifically validated measures:
+
+| Component | Default weight |
+|-----------|----------------|
+| Required skills | 50% |
+| Preferred skills | 10% |
+| Explicit experience duration | 20% |
+| Explicit education | 10% |
+| Deterministic responsibility relevance | 10% |
+
+Required and preferred skills are scored separately using the Phase 2
+canonical taxonomy and source evidence. Experience uses only explicit year
+evidence. Education compares degree level and field conservatively. Role
+relevance uses canonical technical skills, domain phrases, and filtered
+lexical overlap in resume experience/projects; it is not semantic similarity.
+
+If the job description does not contain a component, that component is marked
+`NOT_APPLICABLE` and its weight is redistributed proportionally across all
+applicable components. For example, when only required skills (50%) and
+experience (20%) apply, their effective weights become 71.43% and 28.57%.
+
+`evidence_coverage` is reported separately from `overall_score`. Coverage
+measures how much of the requested evaluation is supported by explicit resume
+evidence; it can be high even when the evidence demonstrates only partial
+alignment. Every component reports its status, effective weight, point
+contribution, explanation, and available evidence references.
+
+The authenticated matching endpoints are:
+
+| Method | Endpoint | Purpose |
+|---------|----------|---------|
+| POST | /matching/evaluate | Evaluate a PDF resume against multipart job-description text |
+| POST | /matching/jobs/{job_id} | Evaluate a PDF against a recruiter-owned stored job |
+
+New `/analysis/{job_id}` records persist the explainable breakdown in the
+nullable `analysis.match_breakdown` field. The legacy `ats_score` remains as a
+rounded compatibility representation of the deterministic overall alignment
+score. New analyses always begin at workflow status `NEW`; shortlist/reject
+transitions are manual and independent of score. Dashboard qualified/rejected
+counts likewise use explicit workflow status rather than a score threshold.
+
+The deterministic score does not call Groq or any other LLM. Existing Groq
+feedback remains downstream of the score and cannot change it. Candidate name,
+email, phone, photographs, addresses, and protected/personal attributes do not
+participate in matching.
+
 ---
 
 # ⚙️ Installation

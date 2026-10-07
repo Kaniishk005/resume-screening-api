@@ -35,7 +35,11 @@ def test_existing_analysis_status_dashboard_leaderboard_and_zip_workflow(
         files={"file": ("candidate.pdf", pdf_bytes, "application/pdf")},
     )
     assert analyzed.status_code == 200
-    assert analyzed.json()["status"] == "SHORTLISTED"
+    assert analyzed.json()["status"] == "NEW"
+    assert analyzed.json()["match_breakdown"]
+    assert analyzed.json()["ats_score"] == round(
+        analyzed.json()["match_breakdown"]["overall_score"]
+    )
 
     # The history contract intentionally omits the internal id, so obtain it
     # through the same test database used by the application fixture.
@@ -43,10 +47,18 @@ def test_existing_analysis_status_dashboard_leaderboard_and_zip_workflow(
 
     db = TestingSessionLocal()
     try:
-        analysis_id = db.query(Analysis).order_by(Analysis.id.desc()).first().id
+        stored = db.query(Analysis).order_by(Analysis.id.desc()).first()
+        analysis_id = stored.id
+        assert stored.match_breakdown
     finally:
         db.close()
 
+    shortlisted = client.patch(
+        f"/analysis/{analysis_id}/status",
+        headers=auth_headers,
+        json={"status": "SHORTLISTED"},
+    )
+    assert shortlisted.status_code == 200
     updated = client.patch(
         f"/analysis/{analysis_id}/status",
         headers=auth_headers,
@@ -54,15 +66,31 @@ def test_existing_analysis_status_dashboard_leaderboard_and_zip_workflow(
     )
     assert updated.status_code == 200
     assert updated.json()["status"] == "INTERVIEW"
-    assert client.get("/analysis/history", headers=auth_headers).json()[0]["status"] == "INTERVIEW"
+    history = client.get("/analysis/history", headers=auth_headers).json()[0]
+    assert history["status"] == "INTERVIEW"
+    assert history["match_breakdown"]
 
     dashboard = client.get(f"/jobs/{job_id}/dashboard", headers=auth_headers)
     assert dashboard.status_code == 200
     assert dashboard.json()["total_resumes"] == 1
+    assert dashboard.json()["qualified"] == 1
 
     leaderboard = client.get(f"/jobs/{job_id}/leaderboard", headers=auth_headers)
     assert leaderboard.status_code == 200
     assert leaderboard.json()["total_candidates"] == 1
+
+    bulk = client.post(
+        f"/analysis/{job_id}/bulk",
+        headers=auth_headers,
+        files=[
+            ("files", ("candidate-one.pdf", pdf_bytes, "application/pdf")),
+            ("files", ("candidate-two.pdf", pdf_bytes, "application/pdf")),
+        ],
+    )
+    assert bulk.status_code == 200
+    assert bulk.json()["successful"] == 2
+    assert all(item["status"] == "NEW" for item in bulk.json()["results"])
+    assert all(item["match_breakdown"] for item in bulk.json()["results"])
 
     archive = io.BytesIO()
     with zipfile.ZipFile(archive, "w") as bundle:

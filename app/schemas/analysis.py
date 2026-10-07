@@ -1,6 +1,7 @@
 from typing import List
 from pydantic import BaseModel
 from app.enums.candidate_status import CandidateStatus
+from app.schemas.matching import MatchResult
 
 class AIFeedback(BaseModel):
 
@@ -28,6 +29,8 @@ class AnalysisResponse(BaseModel):
     ai_feedback: AIFeedback
 
     status: CandidateStatus
+
+    match_breakdown: MatchResult | None = None
 
 class BulkAnalysisResponse(BaseModel):
     total_processed: int

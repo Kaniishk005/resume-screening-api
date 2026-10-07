@@ -3,7 +3,6 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.constants import SHORTLIST_THRESHOLD
 from app.enums.candidate_status import CandidateStatus
 from app.core.security import get_current_user
 from app.db.database import get_db
@@ -153,11 +152,22 @@ def job_dashboard(
         .select_from(Analysis)
         .where(
             Analysis.job_id == job.id,
-            Analysis.ats_score >= SHORTLIST_THRESHOLD
+            Analysis.status.in_([
+                CandidateStatus.SHORTLISTED,
+                CandidateStatus.INTERVIEW,
+                CandidateStatus.HIRED,
+            ])
         )
     ) or 0
 
-    rejected = total - qualified
+    rejected = db.scalar(
+        select(func.count())
+        .select_from(Analysis)
+        .where(
+            Analysis.job_id == job.id,
+            Analysis.status == CandidateStatus.REJECTED,
+        )
+    ) or 0
 
     return {
         "job_title": job.title,

@@ -27,6 +27,8 @@ class Analysis(Base):
 
     ai_feedback: Mapped[str] = mapped_column(Text)
 
+    match_breakdown: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"))
 
     recruiter_id: Mapped[int] = mapped_column(ForeignKey("users.id"))

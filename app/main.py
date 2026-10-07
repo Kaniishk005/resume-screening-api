@@ -4,6 +4,7 @@ from app.api.auth import router as auth_router
 from app.api.jobs import router as jobs_router
 from app.api.resume import router as resume_router
 from app.api.intelligence import router as intelligence_router
+from app.api.matching import router as matching_router
 from app.core.config import settings
 from app.db.database import Base, engine
 from app.db.migrations import upgrade_database
@@ -24,6 +25,7 @@ app.include_router(jobs_router)
 app.include_router(resume_router)
 app.include_router(analysis_router)
 app.include_router(intelligence_router)
+app.include_router(matching_router)
 
 
 @app.get("/")
