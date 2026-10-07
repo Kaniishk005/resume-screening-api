@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     GROQ_API_KEY: str | None = None
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
     GROQ_TIMEOUT_SECONDS: float = 20.0
     DATABASE_URL: str = "sqlite:///resume.db"
     MAX_UPLOAD_SIZE_BYTES: int = 5 * 1024 * 1024

@@ -39,10 +39,17 @@ def test_ai_provider_failure_is_controlled(monkeypatch):
 
 def test_ai_valid_response_is_validated(monkeypatch):
     content = '{"summary":"ok","strengths":[],"weaknesses":[],"recommendation":"yes"}'
+    calls = []
+
+    def create(**kwargs):
+        calls.append(kwargs)
+        return response_with(content)
+
     client = SimpleNamespace(
         chat=SimpleNamespace(
-            completions=SimpleNamespace(create=lambda **kwargs: response_with(content))
+            completions=SimpleNamespace(create=create)
         )
     )
     monkeypatch.setattr("app.services.ai._get_client", lambda: client)
     assert generate_feedback("resume", [], [], 40)["summary"] == "ok"
+    assert calls[0]["model"] == "openai/gpt-oss-120b"

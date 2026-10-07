@@ -291,6 +291,7 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=openai/gpt-oss-120b
 
 # Optional (defaults shown)
 MAX_UPLOAD_SIZE_BYTES=5242880

@@ -92,7 +92,7 @@ def generate_feedback(
     for _ in range(2):
         try:
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=settings.GROQ_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
             )
