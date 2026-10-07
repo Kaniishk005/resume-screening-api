@@ -1,10 +1,40 @@
 import json
+from typing import Any
 
 from groq import Groq
+from pydantic import BaseModel, ValidationError
 
 from app.core.config import settings
 
-client = Groq(api_key=settings.GROQ_API_KEY)
+class AIFeedbackPayload(BaseModel):
+    summary: str
+    strengths: list[str]
+    weaknesses: list[str]
+    recommendation: str
+
+
+class AIServiceError(RuntimeError):
+    """Raised when the configured AI provider cannot return valid feedback."""
+
+
+def _get_client() -> Groq:
+    if not settings.GROQ_API_KEY:
+        raise AIServiceError("AI feedback service is not configured.")
+    return Groq(
+        api_key=settings.GROQ_API_KEY,
+        timeout=settings.GROQ_TIMEOUT_SECONDS,
+        max_retries=0,
+    )
+
+
+def _parse_feedback(content: Any) -> dict:
+    if not isinstance(content, str):
+        raise AIServiceError("AI provider returned an invalid response.")
+    try:
+        payload = json.loads(content)
+        return AIFeedbackPayload.model_validate(payload).model_dump()
+    except (json.JSONDecodeError, ValidationError, TypeError) as exc:
+        raise AIServiceError("AI provider returned malformed feedback.") from exc
 
 
 def generate_feedback(
@@ -57,12 +87,19 @@ def generate_feedback(
         Return JSON only.
     """
 
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-    )
+    client = _get_client()
+    last_error: Exception | None = None
+    for _ in range(2):
+        try:
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+            )
+            return _parse_feedback(completion.choices[0].message.content)
+        except AIServiceError as exc:
+            last_error = exc
+        except Exception as exc:
+            raise AIServiceError("AI feedback provider is unavailable.") from exc
 
-    response = completion.choices[0].message.content
-
-    return json.loads(response)
+    raise AIServiceError("AI provider returned malformed feedback.") from last_error

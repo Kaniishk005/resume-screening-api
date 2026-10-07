@@ -5,15 +5,23 @@ import fitz
 from app.utils.skills import SKILLS
 
 
-def extract_text_from_pdf(file_path: str):
+class ResumeParsingError(ValueError):
+    """Raised when an uploaded resume cannot be parsed safely."""
 
-    doc = fitz.open(file_path)
 
-    text = ""
+def extract_text_from_pdf(file_path: str) -> str:
+    try:
+        with fitz.open(file_path) as doc:
+            if doc.page_count == 0:
+                raise ResumeParsingError("The PDF is empty.")
+            text = "".join(page.get_text() for page in doc)
+    except ResumeParsingError:
+        raise
+    except (fitz.FileDataError, RuntimeError, ValueError, OSError) as exc:
+        raise ResumeParsingError("The uploaded file is not a valid readable PDF.") from exc
 
-    for page in doc:
-        text += page.get_text()
-
+    if not text.strip():
+        raise ResumeParsingError("The PDF contains no extractable text.")
     return text
 
 
@@ -49,17 +57,18 @@ def extract_name(text: str):
     return "Unknown"
 
 
-def extract_skills(text: str):
-
+def extract_skills(text: str) -> list[str]:
     found = set()
-
-    normalized_text = re.sub(r"[^a-zA-Z0-9#+]", " ", text.lower())
+    normalized_text = re.sub(r"[^a-z0-9#+.]", " ", text.lower())
+    normalized_text = re.sub(r"\s+", " ", normalized_text).strip()
 
     for skill in SKILLS:
-        if skill.lower() in normalized_text:
+        normalized_skill = skill.lower()
+        pattern = rf"(?<![a-z0-9#+.]){re.escape(normalized_skill)}(?![a-z0-9#+.])"
+        if re.search(pattern, normalized_text):
             found.add(skill)
 
-        return sorted(found)
+    return sorted(found)
 
 
 def parse_resume(file_path: str):

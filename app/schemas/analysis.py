@@ -1,7 +1,6 @@
 from typing import List
-
 from pydantic import BaseModel
-
+from app.enums.candidate_status import CandidateStatus
 
 class AIFeedback(BaseModel):
 
@@ -27,3 +26,11 @@ class AnalysisResponse(BaseModel):
     missing_skills: List[str]
 
     ai_feedback: AIFeedback
+
+    status: CandidateStatus
+
+class BulkAnalysisResponse(BaseModel):
+    total_processed: int
+    successful: int
+    failed: int
+    results: list[AnalysisResponse]
