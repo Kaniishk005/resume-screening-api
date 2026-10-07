@@ -1,19 +1,12 @@
-import os
-import shutil
-
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app.core.security import get_current_user
 from app.models.user import User
 from app.schemas.resume import ResumeResponse
-from app.services.parser import parse_resume
+from app.services.parser import ResumeParsingError, parse_resume
+from app.services.uploads import UploadValidationError, temporary_pdf
 
 router = APIRouter(prefix="/resume", tags=["Resume"])
-
-
-UPLOAD_FOLDER = "uploads"
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 @router.post("/upload", response_model=ResumeResponse)
@@ -21,12 +14,13 @@ def upload_resume(
     file: UploadFile = File(...), current_user: User = Depends(get_current_user)
 ):
 
-    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    parsed = parse_resume(file_path)
+    try:
+        with temporary_pdf(file) as file_path:
+            parsed = parse_resume(file_path)
+    except UploadValidationError as exc:
+        raise HTTPException(status_code=415, detail=str(exc)) from exc
+    except ResumeParsingError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return {
         "filename": file.filename,
@@ -34,5 +28,5 @@ def upload_resume(
         "email": parsed["email"],
         "phone": parsed["phone"],
         "skills": parsed["skills"],
-        "extracted_text": parsed["text"],
+        "extracted_text": parsed["extracted_text"],
     }
