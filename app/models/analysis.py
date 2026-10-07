@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.database import Base
+from app.enums.candidate_status import CandidateStatus
 
 
 class Analysis(Base):
@@ -16,8 +17,10 @@ class Analysis(Base):
 
     ats_score: Mapped[int] = mapped_column(Integer)
 
-    match_percentage: Mapped[float] = mapped_column(Float)
-
+    match_percentage: Mapped[float] = mapped_column(
+        Float,
+        nullable=False
+    )
     matched_skills: Mapped[str] = mapped_column(Text)
 
     missing_skills: Mapped[str] = mapped_column(Text)
@@ -29,3 +32,10 @@ class Analysis(Base):
     recruiter_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    status: Mapped[CandidateStatus] = mapped_column(
+        Enum(CandidateStatus),
+        default=CandidateStatus.NEW,
+        server_default=CandidateStatus.NEW.value,
+        nullable=False,
+    )
