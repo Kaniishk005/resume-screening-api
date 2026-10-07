@@ -210,6 +210,31 @@ Store Analysis History
 
 ---
 
+## Phase 2: deterministic document intelligence
+
+Phase 2 adds a lightweight, offline intelligence layer that understands
+resume and job-description structure without changing the existing ATS score.
+It detects resume sections, builds a structured candidate profile, canonicalizes
+skill aliases (for example `JS` → `JavaScript` and `Postgres` → `PostgreSQL`),
+captures source evidence, and extracts explicit experience and education
+evidence. Job descriptions are parsed into required versus preferred skills,
+qualifications, responsibilities, experience requirements, education
+requirements, and domain keywords.
+
+The authenticated endpoints are:
+
+| Method | Endpoint | Purpose |
+|---------|----------|---------|
+| POST | /intelligence/resume | Parse a PDF into a structured resume profile |
+| POST | /intelligence/job-description | Parse JSON job-description text into structured requirements |
+
+Parsing is deterministic and does not require `GROQ_API_KEY`, internet access,
+embeddings, or a database migration. These endpoints expose document facts for
+future explainable matching; they do not make hiring decisions or replace the
+existing ATS analysis.
+
+---
+
 # ⚙️ Installation
 
 Clone Repository

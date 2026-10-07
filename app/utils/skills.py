@@ -1,37 +1,9 @@
-SKILLS = [
-    "Python",
-    "Java",
-    "C++",
-    "C",
-    "JavaScript",
-    "TypeScript",
-    "FastAPI",
-    "Flask",
-    "Django",
-    "Node.js",
-    "Express",
-    "MongoDB",
-    "MySQL",
-    "PostgreSQL",
-    "SQLite",
-    "React",
-    "Next.js",
-    "Docker",
-    "Kubernetes",
-    "AWS",
-    "Azure",
-    "GCP",
-    "Git",
-    "GitHub",
-    "TensorFlow",
-    "PyTorch",
-    "Scikit-learn",
-    "Pandas",
-    "NumPy",
-    "Machine Learning",
-    "Deep Learning",
-    "NLP",
-    "LLM",
-    "Redis",
-    "Linux",
-]
+"""Backwards-compatible skill export.
+
+New code should use :mod:`app.services.skill_normalizer`; this import keeps
+older integrations that import ``app.utils.skills.SKILLS`` working.
+"""
+
+from app.data.skill_taxonomy import SKILLS
+
+__all__ = ["SKILLS"]

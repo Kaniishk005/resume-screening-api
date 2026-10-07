@@ -2,7 +2,7 @@ import re
 
 import fitz
 
-from app.utils.skills import SKILLS
+from app.services.skill_normalizer import extract_normalized_skills
 
 
 class ResumeParsingError(ValueError):
@@ -58,17 +58,7 @@ def extract_name(text: str):
 
 
 def extract_skills(text: str) -> list[str]:
-    found = set()
-    normalized_text = re.sub(r"[^a-z0-9#+.]", " ", text.lower())
-    normalized_text = re.sub(r"\s+", " ", normalized_text).strip()
-
-    for skill in SKILLS:
-        normalized_skill = skill.lower()
-        pattern = rf"(?<![a-z0-9#+.]){re.escape(normalized_skill)}(?![a-z0-9#+.])"
-        if re.search(pattern, normalized_text):
-            found.add(skill)
-
-    return sorted(found)
+    return extract_normalized_skills(text)
 
 
 def parse_resume(file_path: str):
