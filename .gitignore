@@ -13,3 +13,7 @@ uploads/*
 
 .idea/
 .vscode/
+
+.uv-cache/
+.uv-python/
+tests/test.db

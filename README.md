@@ -252,6 +252,23 @@ Run Server
 uvicorn app.main:app --reload
 ```
 
+Run Tests
+
+```bash
+pytest -q
+```
+
+Apply database migrations before starting or redeploying the API:
+
+```bash
+alembic upgrade head
+```
+
+The initial migration is safe for both existing databases and fresh databases:
+it adds `analysis.status` only when the table exists and the column is absent.
+Application startup also runs `alembic upgrade head` before serving requests so
+deployments cannot start against an older schema.
+
 Open
 
 ```
@@ -274,7 +291,22 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 GROQ_API_KEY=your_groq_api_key
+
+# Optional (defaults shown)
+MAX_UPLOAD_SIZE_BYTES=5242880
+GROQ_TIMEOUT_SECONDS=20
 ```
+
+`SECRET_KEY` is required. `GROQ_API_KEY` is required only for AI analysis;
+the application and health endpoint can start without it. Production deployments
+should supply configuration through environment variables rather than committing a
+`.env` file.
+
+Only PDF resumes are supported. Files are validated, limited to the configured
+maximum size (5 MiB by default), processed through temporary files, and removed
+after each request.
+
+The basic health check is available at `GET /health` and does not contact Groq.
 
 ---
 
