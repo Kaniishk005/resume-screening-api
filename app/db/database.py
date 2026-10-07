@@ -1,9 +1,19 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from app.core.config import settings
+from app.core.config import normalize_database_url, settings
 
-engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
+
+def engine_options(database_url: str) -> tuple[str, dict[str, object]]:
+    """Build a normalized URL and dialect-specific engine options."""
+
+    normalized_url = normalize_database_url(database_url)
+    options = {"check_same_thread": False} if normalized_url.startswith("sqlite") else {}
+    return normalized_url, options
+
+
+DATABASE_URL, connect_args = engine_options(settings.DATABASE_URL)
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

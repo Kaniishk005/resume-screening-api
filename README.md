@@ -269,6 +269,30 @@ it adds `analysis.status` only when the table exists and the column is absent.
 Application startup also runs `alembic upgrade head` before serving requests so
 deployments cannot start against an older schema.
 
+Database configuration
+
+Local development and tests may use SQLite:
+
+```dotenv
+DATABASE_URL=sqlite:///./resume.db
+```
+
+Production should use a durable PostgreSQL database:
+
+```dotenv
+DATABASE_URL=postgresql+psycopg://user:password@host:5432/database
+```
+
+Render-provided `postgres://` and plain `postgresql://` URLs are normalized to
+the Psycopg 3 SQLAlchemy dialect. SQLite-only connection arguments are applied
+only to SQLite.
+
+Application startup runs Alembic before `Base.metadata.create_all()`. The
+`create_all()` call remains a temporary bootstrap fallback because the current
+migration history starts with an incremental migration rather than a complete
+initial-schema migration. Alembic should become the sole schema authority after
+a future baseline-migration cleanup.
+
 Open
 
 ```

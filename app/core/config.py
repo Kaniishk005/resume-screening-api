@@ -1,5 +1,16 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
+def normalize_database_url(database_url: str) -> str:
+    """Return a SQLAlchemy URL that explicitly uses the Psycopg 3 driver."""
+
+    if database_url.startswith("postgres://"):
+        return "postgresql+psycopg://" + database_url[len("postgres://") :]
+    if database_url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + database_url[len("postgresql://") :]
+    return database_url
+
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "AI Resume Screening API"
     VERSION: str = "1.0.0"
