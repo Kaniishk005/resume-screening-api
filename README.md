@@ -504,3 +504,10 @@ https://github.com/Kaniishk005
 ---
 
 # ⭐ If you found this project useful, consider giving it a star.
+### Browser development CORS
+
+Set `CORS_ALLOWED_ORIGINS` to a comma-separated list of explicit frontend origins, for example:
+
+`CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173`
+
+Bearer-token requests do not require credentialed cookies; origins are explicit rather than wildcarded.

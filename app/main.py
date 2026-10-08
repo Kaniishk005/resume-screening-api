@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.analysis import router as analysis_router
 from app.api.auth import router as auth_router
 from app.api.jobs import router as jobs_router
@@ -15,6 +16,14 @@ from app.models.analysis import Analysis
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 upgrade_database()

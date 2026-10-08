@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     GROQ_TIMEOUT_SECONDS: float = 20.0
     DATABASE_URL: str = "sqlite:///resume.db"
     MAX_UPLOAD_SIZE_BYTES: int = 5 * 1024 * 1024
+    CORS_ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.CORS_ALLOWED_ORIGINS.split(",") if origin.strip()]
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
