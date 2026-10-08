@@ -364,3 +364,13 @@ def test_matching_endpoint_rejects_empty_job_description(client, auth_headers, p
         files={"file": ("resume.pdf", pdf_bytes, "application/pdf")},
     )
     assert response.status_code == 422
+
+
+def test_matching_endpoint_rejects_well_formed_non_pdf_with_415(client, auth_headers):
+    response = client.post(
+        "/matching/evaluate",
+        headers=auth_headers,
+        data={"job_description": "Required:\nPython"},
+        files={"file": ("resume.txt", b"not a pdf", "text/plain")},
+    )
+    assert response.status_code == 415

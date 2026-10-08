@@ -79,6 +79,7 @@ def process_resume_file(
         raise HTTPException(status_code=500, detail="Unable to save analysis.") from exc
 
     return {
+        "analysis_id": analysis.id,
         "candidate_name": resume_profile.candidate_name,
         "ats_score": ats_score,
         "status": status,
@@ -150,6 +151,7 @@ def get_analysis_history(
 
         history.append(
             {
+                "analysis_id": analysis.id,
                 "candidate_name": analysis.candidate_name,
                 "ats_score": analysis.ats_score,
                 "status": analysis.status,

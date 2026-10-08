@@ -16,6 +16,8 @@ class AIFeedback(BaseModel):
 
 class AnalysisResponse(BaseModel):
 
+    analysis_id: int
+
     candidate_name: str
 
     ats_score: int

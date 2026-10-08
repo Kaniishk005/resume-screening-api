@@ -1,9 +1,6 @@
 import io
 import zipfile
 
-from app.models.analysis import Analysis
-
-
 def test_existing_analysis_status_dashboard_leaderboard_and_zip_workflow(
     client, auth_headers, pdf_bytes, monkeypatch
 ):
@@ -40,18 +37,8 @@ def test_existing_analysis_status_dashboard_leaderboard_and_zip_workflow(
     assert analyzed.json()["ats_score"] == round(
         analyzed.json()["match_breakdown"]["overall_score"]
     )
-
-    # The history contract intentionally omits the internal id, so obtain it
-    # through the same test database used by the application fixture.
-    from conftest import TestingSessionLocal
-
-    db = TestingSessionLocal()
-    try:
-        stored = db.query(Analysis).order_by(Analysis.id.desc()).first()
-        analysis_id = stored.id
-        assert stored.match_breakdown
-    finally:
-        db.close()
+    analysis_id = analyzed.json()["analysis_id"]
+    assert isinstance(analysis_id, int)
 
     shortlisted = client.patch(
         f"/analysis/{analysis_id}/status",
@@ -67,6 +54,7 @@ def test_existing_analysis_status_dashboard_leaderboard_and_zip_workflow(
     assert updated.status_code == 200
     assert updated.json()["status"] == "INTERVIEW"
     history = client.get("/analysis/history", headers=auth_headers).json()[0]
+    assert history["analysis_id"] == analysis_id
     assert history["status"] == "INTERVIEW"
     assert history["match_breakdown"]
 
@@ -90,6 +78,7 @@ def test_existing_analysis_status_dashboard_leaderboard_and_zip_workflow(
     assert bulk.status_code == 200
     assert bulk.json()["successful"] == 2
     assert all(item["status"] == "NEW" for item in bulk.json()["results"])
+    assert all(isinstance(item["analysis_id"], int) for item in bulk.json()["results"])
     assert all(item["match_breakdown"] for item in bulk.json()["results"])
 
     archive = io.BytesIO()
@@ -106,4 +95,80 @@ def test_existing_analysis_status_dashboard_leaderboard_and_zip_workflow(
     body = bulk.json()
     assert body["successful"] == 2
     assert body["failed"] == 0
+    assert all(isinstance(item["analysis_id"], int) for item in body["results"])
     assert all("skills" not in item for item in body["results"])
+
+
+def test_analysis_status_update_enforces_ownership_not_found_and_transitions(
+    client, auth_headers, pdf_bytes, monkeypatch
+):
+    monkeypatch.setattr(
+        "app.api.analysis.generate_feedback",
+        lambda *_args: {
+            "summary": "Qualified",
+            "strengths": ["Python"],
+            "weaknesses": [],
+            "recommendation": "Interview",
+        },
+    )
+    job = client.post(
+        "/jobs/",
+        headers=auth_headers,
+        json={
+            "title": "Backend Engineer",
+            "company": "Example",
+            "description": "Build APIs",
+            "required_skills": "Python",
+            "experience": "2 years",
+            "location": "Remote",
+        },
+    )
+    analysis = client.post(
+        f"/analysis/{job.json()['id']}",
+        headers=auth_headers,
+        files={"file": ("candidate.pdf", pdf_bytes, "application/pdf")},
+    )
+    analysis_id = analysis.json()["analysis_id"]
+
+    assert client.post(
+        "/auth/register",
+        json={
+            "username": "other-recruiter",
+            "email": "other-recruiter@example.com",
+            "password": "password-123",
+        },
+    ).status_code == 201
+    other_token = client.post(
+        "/auth/login",
+        data={
+            "username": "other-recruiter@example.com",
+            "password": "password-123",
+        },
+    ).json()["access_token"]
+    other_headers = {"Authorization": f"Bearer {other_token}"}
+
+    assert client.patch(
+        f"/analysis/{analysis_id}/status",
+        headers=other_headers,
+        json={"status": "SHORTLISTED"},
+    ).status_code == 404
+    assert client.patch(
+        "/analysis/999999/status",
+        headers=auth_headers,
+        json={"status": "SHORTLISTED"},
+    ).status_code == 404
+    assert client.patch(
+        f"/analysis/{analysis_id}/status",
+        headers=auth_headers,
+        json={"status": "HIRED"},
+    ).status_code == 400
+
+    updated = client.patch(
+        f"/analysis/{analysis_id}/status",
+        headers=auth_headers,
+        json={"status": "SHORTLISTED"},
+    )
+    assert updated.status_code == 200
+    history = client.get("/analysis/history", headers=auth_headers).json()
+    persisted = next(item for item in history if item["analysis_id"] == analysis_id)
+    assert persisted["status"] == "SHORTLISTED"
