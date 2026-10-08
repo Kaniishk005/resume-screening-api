@@ -1,7 +1,8 @@
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.enums.candidate_status import CandidateStatus
 from app.schemas.matching import MatchResult
+from app.schemas.feedback import FeedbackSource, FeedbackStatus
 
 class AIFeedback(BaseModel):
 
@@ -12,6 +13,16 @@ class AIFeedback(BaseModel):
     weaknesses: List[str]
 
     recommendation: str
+
+    evidence_references: dict[str, List[str]] = Field(default_factory=dict)
+
+    limitations: List[str] = Field(default_factory=list)
+
+    feedback_source: FeedbackSource = "legacy"
+
+    feedback_status: FeedbackStatus = "generated"
+
+    grounding_version: str | None = None
 
 
 class AnalysisResponse(BaseModel):

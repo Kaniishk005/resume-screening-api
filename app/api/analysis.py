@@ -27,6 +27,7 @@ from app.schemas.matching import MatchResult
 from app.services.job_parser import parse_stored_job
 from app.services.matching import evaluate_match
 from app.services.resume_intelligence import build_resume_profile
+from app.services.feedback_context import build_feedback_context, deterministic_feedback
 
 router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
@@ -50,12 +51,15 @@ def process_resume_file(
     match_percentage = required_component.score or 0.0
     status = CandidateStatus.NEW
 
-    feedback = generate_feedback(
-        resume_text,
-        match_result.matched_required_skills,
-        match_result.missing_required_skills,
-        ats_score
+    feedback_context = build_feedback_context(
+        resume_profile,
+        job_profile,
+        match_result,
     )
+    try:
+        feedback = generate_feedback(feedback_context)
+    except AIServiceError:
+        feedback = deterministic_feedback(match_result)
 
     analysis = Analysis(
         candidate_name=resume_profile.candidate_name,
@@ -132,8 +136,6 @@ def analyze_resume(
         raise HTTPException(status_code=415, detail=str(exc)) from exc
     except ResumeParsingError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except AIServiceError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @router.get("/history", response_model=list[AnalysisResponse])
@@ -252,7 +254,7 @@ def analyze_bulk_resumes(
 
             successful += 1
 
-        except (UploadValidationError, ResumeParsingError, AIServiceError, HTTPException):
+        except (UploadValidationError, ResumeParsingError, HTTPException):
             db.rollback()
             failed += 1
 
@@ -300,7 +302,7 @@ def analyze_zip(
                     result = process_resume_file(pdf, job, db, current_user)
                     results.append(result)
                     successful += 1
-                except (ResumeParsingError, AIServiceError, HTTPException):
+                except (ResumeParsingError, HTTPException):
                     db.rollback()
                     failed += 1
     except (ValueError, OSError) as exc:

@@ -82,4 +82,8 @@ def test_analysis_with_mocked_ai_output(client, auth_headers, pdf_bytes, monkeyp
         files={"file": ("resume.pdf", pdf_bytes, "application/pdf")},
     )
     assert response.status_code == 200
-    assert response.json()["ai_feedback"] == feedback
+    body = response.json()["ai_feedback"]
+    assert {key: body[key] for key in feedback} == feedback
+    assert body["feedback_source"] == "legacy"
+    assert body["feedback_status"] == "generated"
+    assert body["evidence_references"] == {}

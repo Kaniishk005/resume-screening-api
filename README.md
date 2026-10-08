@@ -1,6 +1,6 @@
 # 🚀 AI Resume Screening API
 
-An AI-powered Resume Screening API built using **FastAPI**, **SQLAlchemy**, **JWT Authentication**, and **Groq LLM**. The API allows recruiters to create job descriptions, upload resumes, calculate ATS scores, identify missing skills, and generate AI-powered hiring feedback.
+An AI-assisted Resume Screening API built using **FastAPI**, **SQLAlchemy**, **JWT Authentication**, and **Groq**. The API lets recruiters create job descriptions, upload resumes, calculate deterministic document-alignment scores, identify evidence gaps, and generate grounded resume-improvement feedback.
 
 ---
 
@@ -44,14 +44,14 @@ https://resume-screening-api-z2fi.onrender.com/docs
 - Missing Skills Detection
 
 ### 🤖 AI Feedback
-Powered by **Groq Llama 3**
+Powered by the configured **Groq** model
 
 Generates
 
 - Resume Summary
 - Strengths
 - Weaknesses
-- Hiring Recommendation
+- Conditional Resume-Improvement Recommendations
 
 ### 📚 Analysis History
 
@@ -72,7 +72,7 @@ Stores every resume analysis including
 - FastAPI
 - Python
 - SQLAlchemy ORM
-- SQLite
+- PostgreSQL (production) / SQLite (local development and tests)
 
 ## Authentication
 
@@ -288,6 +288,45 @@ feedback remains downstream of the score and cannot change it. Candidate name,
 email, phone, photographs, addresses, and protected/personal attributes do not
 participate in matching.
 
+## Phase 4: grounded AI resume feedback
+
+Phase 4 keeps the Phase 2/3 deterministic pipeline authoritative and uses the
+LLM only as an advisory explanation layer. After matching completes, a
+deterministic builder creates a bounded, privacy-reduced context containing the
+job title, authoritative score and evidence coverage, required/preferred skill
+results, structured experience and education results, role relevance,
+deterministic strengths/gaps, and short job-relevant evidence snippets.
+
+The feedback request does **not** include the complete resume or job
+description, candidate name, email, phone, address/header text, or other
+unrelated personal information. Known identity/contact values and common
+email/phone patterns are also redacted from selected evidence. The model does
+not receive secrets or database records.
+
+Each supplied fact has a deterministic request-local ID such as
+`REQ_SKILL_1`, `EXP_1`, or `ROLE_1`. Factual strengths and evidence gaps in the
+provider response must cite known fact IDs. Provider JSON is validated with a
+strict schema: unknown fields (including score or status fields), unknown fact
+IDs, ungrounded factual items, non-conditional improvement advice, and hiring
+decision language are rejected. Invalid output receives at most one retry.
+
+System instructions and user data are separate messages. The system message
+states that all resume/JD evidence is untrusted data and that embedded
+instructions must not be followed. This architecture reduces prompt-injection
+risk and makes score/status mutation impossible through the feedback schema,
+but it is not a mathematical guarantee against every possible model behavior;
+strict server-side validation remains the enforcement boundary.
+
+The additive feedback metadata identifies whether content came from `groq` or
+`deterministic_fallback`, along with generated/unavailable status, evidence
+references, limitations, and grounding version. If Groq is unavailable,
+misconfigured, times out, or repeatedly returns invalid output, the valid
+deterministic analysis is still persisted and returned with an explicitly
+labeled fallback built from `MatchResult`. The same resilience applies to bulk
+and ZIP processing. AI feedback never changes scores, candidate status,
+dashboard calculations, or leaderboard ordering, and it never recommends
+hiring, rejection, shortlisting, or interviewing.
+
 ---
 
 # ⚙️ Installation
@@ -435,7 +474,12 @@ The basic health check is available at `GET /health` and does not contact Groq.
     "summary": "...",
     "strengths": [],
     "weaknesses": [],
-    "recommendation": "..."
+    "recommendation": "...",
+    "evidence_references": {},
+    "limitations": [],
+    "feedback_source": "groq",
+    "feedback_status": "generated",
+    "grounding_version": "1.0"
   }
 }
 ```
