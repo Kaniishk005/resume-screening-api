@@ -1,6 +1,6 @@
-# 🚀 AI Resume Screening API
+# ResumeTrace API
 
-An AI-assisted Resume Screening API built using **FastAPI**, **SQLAlchemy**, **JWT Authentication**, and **Groq**. The API lets recruiters create job descriptions, upload resumes, calculate deterministic document-alignment scores, identify evidence gaps, and generate grounded resume-improvement feedback.
+Evidence-backed resume–job intelligence API built using **FastAPI**, **SQLAlchemy**, **JWT authentication**, and **Groq**. The API lets recruiters create job descriptions, upload resumes, calculate deterministic document-alignment scores, inspect evidence gaps, and generate grounded advisory feedback.
 
 ---
 

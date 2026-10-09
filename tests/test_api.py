@@ -28,6 +28,12 @@ def test_health(client):
     assert client.get("/health").json() == {"status": "ok"}
 
 
+def test_openapi_uses_resumetrace_branding(client):
+    schema = client.get("/openapi.json").json()
+    assert schema["info"]["title"] == "ResumeTrace API"
+    assert schema["info"]["description"] == "Evidence-backed resume–job intelligence API"
+
+
 def test_protected_endpoint_rejects_missing_token(client):
     assert client.get("/jobs/").status_code == 401
 

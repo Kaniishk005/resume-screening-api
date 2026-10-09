@@ -12,7 +12,8 @@ def normalize_database_url(database_url: str) -> str:
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "AI Resume Screening API"
+    PROJECT_NAME: str = "ResumeTrace API"
+    PROJECT_DESCRIPTION: str = "Evidence-backed resume–job intelligence API"
     VERSION: str = "1.0.0"
     SECRET_KEY: str
     ALGORITHM: str = "HS256"

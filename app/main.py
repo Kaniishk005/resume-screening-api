@@ -14,7 +14,8 @@ from app.models.analysis import Analysis
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
+    title="ResumeTrace API",
+    description="Evidence-backed resume–job intelligence API",
     version=settings.VERSION,
 )
 
@@ -39,7 +40,7 @@ app.include_router(matching_router)
 
 @app.get("/")
 def home():
-    return {"message": "Resume Screening API is running!"}
+    return {"message": "ResumeTrace API is running!"}
 
 
 @app.get("/health", tags=["Health"])
